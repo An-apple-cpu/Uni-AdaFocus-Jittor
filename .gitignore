@@ -1,5 +1,6 @@
 # Independent upstream checkout
 /references/Uni-AdaFocus-official/
+/local_resources/
 
 # Datasets, videos, and extracted frames
 **/data/

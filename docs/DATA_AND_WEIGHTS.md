@@ -24,6 +24,24 @@ Qualcomm 的[研究许可](https://www.qualcomm.com/content/dam/qcomm-martech/dm
 
 [TSM 数据准备说明](https://github.com/mit-han-lab/temporal-shift-module#data-preparation)说明抽帧、生成列表、配置路径；其 [`gen_label_sthv2.py`](https://github.com/mit-han-lab/temporal-shift-module/blob/master/tools/gen_label_sthv2.py) 注释提及 `jester-v1`，但实际默认读取 Something-Something V2 的 JSON 和帧目录，**不能原样用于当前 Jester 标签包**。目标 Uni-AdaFocus 目录未找到 Jester 专用生成器或现成列表。需要从 Qualcomm 原始标签包确认类名顺序、视频 ID、train/validation 成员，再按帧目录统计帧数生成；包内容尚未取得，因此映射和是否可可靠生成仍**待确认**。
 
+## S1.1 本地标签核验（2026-11-16）
+
+S0.4 的“标签尚未取得”是当时状态；本轮已检查用户解压在 `local_resources/jester-labels/jester_labels/` 的五个 CSV。原始压缩包未保留，故不能验证压缩包完整性或与官方发布文件逐字节相同。Qualcomm [下载页](https://www.qualcomm.com/developer/software/jester-dataset/downloads)列有标签包，但未给出可对照的逐文件哈希。
+
+| 文件 | 字节 | SHA256 | 行数、格式和用途 |
+|---|---:|---|---|
+| `labels.csv` | 528 | `E276B0171B36EF05440506D8EE8E10FAA4171356C27A4278D6CE868AA1BEA77E` | 27；单列类别名称，行序决定类别 ID |
+| `train.csv` | 3,042,748 | `74AE7056493693EDDE411265E1D35D420E0AC635EFD242E6A610D6C66B918C6A` | 118,562；`视频ID;类名` |
+| `validation.csv` | 379,289 | `39EE9873FC2FE8131831727B1A95E8CFA4F303BF1F03FDF7BC53B60A94A9FF0F` | 14,787；`视频ID;类名` |
+| `test.csv` | 92,133 | `42239019895420DF269D90133A1B732717BA8CCBBD9DB19C91417EC4E81BE559` | 14,743；单列视频 ID |
+| `test-answers.csv` | 377,962 | `47851DFE254AD3263224CD0B8C7979197B9A212822D6C929667B7A58D3A0F699` | 14,743；`视频ID;类名`，测试答案，不用于训练/验证 |
+
+五个文件均无表头，内容为 ASCII 且可严格按 UTF-8 解码，采用 LF 行尾。逐行结构检查未发现空行、NUL、首尾空白、重复记录、非规范数字 ID 或未知类别。`labels.csv` 有 27 个互不重复的类名；训练、验证和测试答案均覆盖全部 27 类。训练、验证、测试各自 ID 无重复，三者两两无交叉，合并恰为 1–148092 的 148,092 个视频 ID。`test-answers.csv` 与 `test.csv` 的 ID 集合相同，但行序不同，必须按 ID 关联。训练 118,562、验证 14,787、测试 14,743、总数 148,092 和 27 类均与 [Qualcomm 数据页](https://www.qualcomm.com/developer/software/jester-dataset)一致。此为本地内容与发布统计的一致性核验，不证明文件来源或 JPG 帧完整性。
+
+类别映射应严格采用 `labels.csv` 原始行序的 **0-based** 行号，范围为 0–26；逐字匹配训练和验证记录中的类名，不排序、翻译或另行编号。本地检查确认所有有标签记录均可按此规则唯一映射。文档不转载完整类别名称或样本级原始标签记录。
+
+锁定的 Uni-AdaFocus 源码要求 `jester/category.txt` 每行一类，使用上述原顺序；`train_videofolder.txt`、`val_videofolder.txt` 分别保持 `train.csv`、`validation.csv` 的固定成员。列表每行是 `视频目录 帧数 整数类别ID`：视频目录用帧根目录下的视频 ID，类别 ID 用上述映射。标签可提供目录 ID、成员及类别，却**不含帧数**；取得完整 JPG 帧后须逐目录核实 `00001.jpg` 起的帧编号及真实帧数，才能生成正式列表。`ops/dataset.py` 在非测试模式过滤帧数少于 3 的记录，故当前标签行数不能当作最终可加载样本数。未生成任何列表，也未改动官方源码。
+
 ## 存储判断与获取顺序
 
 已核实的下载体积只有数据包总量 **22.8 GB**。解压后 JPG 总量、标签包、Jester checkpoint、MobileNet 权重、训练 checkpoint/日志和临时处理空间均无可靠实测容量；不能给出精确总需求。若 50 GB 数据盘同时放完整下载包与解压帧，下载包已占约 22.8 GB，剩余约 27.2 GB，**明显存在空间不足风险，是否必然不足待解压体积验证**。30 GB 系统盘还需容纳环境、缓存和可能的权重，余量未测。先确认许可/下载通道和实际分段大小，再在服务器分配空间前确认解压后与临时峰值；不在 50 GB 上盲目开始全量下载。
