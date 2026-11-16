@@ -1,0 +1,62 @@
+# Independent upstream checkout
+/references/Uni-AdaFocus-official/
+
+# Datasets, videos, and extracted frames
+**/data/
+**/datasets/
+**/dataset/
+**/raw_videos/
+**/videos/
+**/frames/
+**/extracted_frames/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+
+# Weights and checkpoints
+**/checkpoints/
+**/ckpt/
+**/weights/
+*.pth
+*.pth.tar
+*.pt
+*.ckpt
+*.safetensors
+*.onnx
+*.pkl
+
+# Python environments and caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Temporary files and generated run logs
+*.tmp
+*.temp
+*.swp
+*.bak
+*.log
+**/logs/
+**/runs/
+**/tensorboard/
+**/wandb/
+
+# Secrets and local SSH configuration
+**/.ssh/
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+**/id_rsa
+**/id_ed25519
+**/known_hosts
+**/config_ssh
